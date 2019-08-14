@@ -1,0 +1,11 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+    <div class="text-center text-primary">
+        <h1 class="display-4">Welcome @User.Identity.Name</h1>
+        <p>Your are now logged in.</p>
+        <a class="btn btn-outline-primary" asp-controller="AspDotNetCoreSecurityManager" asp-action="RemoveUserIdentity"><span class="fa fa-lock"></span> Logout Now</a>
+    </div>
+<hr />
+<h1 class="display-4">An Example of Authentication in Asp.Net Core</h1>

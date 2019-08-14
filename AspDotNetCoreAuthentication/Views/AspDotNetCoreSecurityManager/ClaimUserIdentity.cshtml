@@ -1,0 +1,77 @@
+﻿@model AspDotNetCoreAuthentication.Models.UserIdentity
+
+@{
+    ViewData["Title"] = "ClaimUserIdentity";
+}
+
+
+<div class="row">
+    <div class="col-md-12 col-xl-6 col-sm-12 col-lg-6 offset-lg-3">
+        <div class="card">
+            <form asp-action="ClaimUserIdentity">
+                <div class="card-header">
+                    <h5 class="card-title"><span class="fa fa-user"></span> Claim Your Identity</h5>
+                    @if (ViewBag.reponse != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible">
+                            <span class="fa fa-exclamation-triangle"></span>   @Html.Raw(@ViewBag.reponse)
+                        <button type="reset" onclick="$('.alert').hide()" class="btn btn-sm text-danger"> <strong>Retry-Now</strong></button>
+                        </div>
+                    }
+                </div>
+                <div class="card-body">
+
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <div class="form-group">
+                        <span class="fa fa-user"></span> <label asp-for="UserName" class="control-label"></label>
+                        <input id="UserName" asp-for="UserName" class="form-control" />
+                        <span asp-validation-for="UserName" class="text-danger"></span>
+                    </div>
+
+
+                    <div class="form-group">
+                        <span class="fa fa-lock"></span> <label asp-for="Password" class="control-label"></label>
+                        <input id="Password" asp-for="Password" class="form-control" />
+                        <span asp-validation-for="Password" class="text-danger"></span>
+                    </div>
+
+
+                    <div class="form-group">
+                        <span class="fa fa-address-book"></span> <label asp-for="UserRole" class="control-label"></label>
+                        <select id="UserRole" asp-for="UserRole" class="form-control">
+                            <option selected="selected" value="">Select Role</option>
+                            <option value="user">User</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                        <span asp-validation-for="UserRole" class="text-danger"></span>
+                    </div>
+                    <div class="text-right form-group">
+                        <button id="loginbtn" type="submit" class="btn btn-primary"><span class="fa fa-user"></span>Claim Identity </button>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+    </div>
+    <div>
+    </div>
+
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+
+<script src="~/lib/jquery/dist/jquery.js"></script>
+<script>
+    $("#loginbtn").click(function () {
+        var formdata = new Object();
+        formdata.UserName = $("#UserName").val();
+        formdata.Password = $("#Password").val();
+        formdata.UserRole = $("#UserRole").val();
+        if (formdata.UserName != "" && formdata.Password != "" && formdata.UserRole != "") {
+            $("#loginbtn").html("Authenticating...");
+        }
+
+    });
+</script>
