@@ -7,9 +7,39 @@ Secure your Dot.Net Core Application using Asp.Net Core  Authentication and Auth
 
 
 # Login Manager configuration 
-                  Login Class
-                  
-                   var UserIdentity = new ClaimsIdentity(new[]
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security.Claims;
+using System.Threading.Tasks;
+using AspDotNetCoreAuthentication.Models;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace AspDotNetCoreAuthentication.Controllers
+{
+    public class AspDotNetCoreSecurityManagerController : Controller
+    {
+        [HttpGet]
+        [RequireHttps]
+        [AllowAnonymous]
+        public IActionResult ClaimUserIdentity() => View();
+
+        [HttpPost]
+        [RequireHttps]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        [AutoValidateAntiforgeryToken] 
+        public IActionResult ClaimUserIdentity(UserIdentity _userIdentity)
+        {
+            if (ModelState.IsValid)
+            {
+             if (_userIdentity.UserName == FakeDBContext().UserName && _userIdentity.UserRole == FakeDBContext().UserRole &&                             FakeDBContext().Password == _userIdentity.Password)
+                {
+                    var UserIdentity = new ClaimsIdentity(new[]
                     {
                        new Claim(ClaimTypes.Name,_userIdentity.UserName),
                        new Claim(ClaimTypes.Role ,_userIdentity.UserRole)
@@ -18,36 +48,96 @@ Secure your Dot.Net Core Application using Asp.Net Core  Authentication and Auth
                     var UserPrinciple = new ClaimsPrincipal(UserIdentity);
 
                     HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, UserPrinciple);
+
+                    return RedirectToAction("Index", "Home");
+                }
+        else if (_userIdentity.UserName == FakeDBContext().UserName && _userIdentity.UserRole == FakeDBContext().UserRole &&                             FakeDBContext().Password == _userIdentity.Password)
+                {
+                    var AdminIdentity = new ClaimsIdentity(new[]
+                       {
+                       new Claim(ClaimTypes.Name,_userIdentity.UserName),
+                       new Claim(ClaimTypes.Role ,_userIdentity.UserRole)
+                    }, CookieAuthenticationDefaults.AuthenticationScheme);
+
+                    var AdminPrinciple = new ClaimsPrincipal(AdminIdentity);
+
+                    HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, AdminPrinciple);
+
+                    return RedirectToAction("Index", "Home");
+                }
+                ViewBag.reponse = "Login attempt was unsuccessful!";
+                return View();
+            }
+            ViewBag.reponse = "Login attempt was unsuccessful!";
+            return View();
+        }
+
+        public IActionResult RemoveUserIdentity()
+        {
+            HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return RedirectToAction(nameof(ClaimUserIdentity));
+        }
+
+
+        public UserIdentity FakeDBContext()
+        {
+            return new UserIdentity { UserName = "Admin", Password = "123456", UserRole = "admin" };
+        }
+ 
+    }
+}
+
                     
                     
-  # startup File Configuration
+# startup File Configuration
   
-    public void ConfigureServices(IServiceCollection services)
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace AspDotNetCoreAuthentication
+{
+    public class Startup
     {
+        public Startup(IConfiguration configuration)
+        {
+            Configuration = configuration;
+        }
+
+        public IConfiguration Configuration { get; }
+
+        
+        public void ConfigureServices(IServiceCollection services)
+        {
             services.Configure<CookiePolicyOptions>(options =>
             {
-                
+               
                 options.CheckConsentNeeded = context => true;
                 options.MinimumSameSitePolicy = SameSiteMode.None;
             });
 
-            //Registering Employee service in dependency container here.
-
-            services.AddSingleton<IEmployeeService, Employeeservice>();
-            //Registering session
-            services.AddSession();
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
+
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-                .AddCookie(Options => 
-                 { 
-                     Options.AccessDeniedPath = "/Employee/EmployeeBoard";
-                     Options.LoginPath = "/AspDotNetCoreSecurityManager/ClaimUserIdentity";
-                     Options.LogoutPath= "/AspDotNetCoreSecurityManager/ClaimUserIdentity";
-                 } 
-                );
-             
+            .AddCookie(Options =>
+              {
+                  Options.AccessDeniedPath = "/Home/Error";
+                  Options.LoginPath = "/AspDotNetCoreSecurityManager/ClaimUserIdentity";
+                  Options.LogoutPath = "/AspDotNetCoreSecurityManager/ClaimUserIdentity";
+              }
+              );
+
             services.AddAuthorization(Options =>
             {
                 Options.AddPolicy("RequiredAdminAccess", _policy => _policy.RequireAuthenticatedUser().RequireRole("admin"));
@@ -57,9 +147,10 @@ Secure your Dot.Net Core Application using Asp.Net Core  Authentication and Auth
             {
                 Options.AddPolicy("UserAccessible", _policy => _policy.RequireAuthenticatedUser().RequireRole("user"));
             });
+
         }
 
-     
+      
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
             if (env.IsDevelopment())
@@ -68,25 +159,26 @@ Secure your Dot.Net Core Application using Asp.Net Core  Authentication and Auth
             }
             else
             {
-                app.UseExceptionHandler("/Home/Error");
-                
+                app.UseExceptionHandler("/Home/Error"); 
                 app.UseHsts();
             }
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseCookiePolicy();
-            //using session
-            app.UseSession();
-
+            app.UseAuthentication();
+          
 
             app.UseMvc(routes =>
             {
                 routes.MapRoute(
                     name: "default",
-                    template: "{controller=Employee}/{action=Employeeboard}/{id?}");
+                    template: "{controller=Home}/{action=Index}/{id?}");
             });
         }
+    }
+}
+
         
   # controller Configuration
    
