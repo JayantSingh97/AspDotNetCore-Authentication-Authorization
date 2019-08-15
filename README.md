@@ -134,7 +134,7 @@ namespace AspDotNetCoreAuthentication
               {
                   Options.AccessDeniedPath = "/Home/Error";
                   Options.LoginPath = "/AspDotNetCoreSecurityManager/ClaimUserIdentity";
-                  Options.LogoutPath = "/AspDotNetCoreSecurityManager/ClaimUserIdentity";
+                  Options.LogoutPath = "/AspDotNetCoreSecurityManager/RemoveUserIdentity";
               }
               );
 
